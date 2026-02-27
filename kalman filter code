@@ -1,0 +1,34 @@
+// Electrical components
+Modelica.Electrical.Analog.Sources.ConstantVoltage battery(V=12) "Battery voltage source";
+Modelica.Electrical.Analog.Basic.Resistor internalResistance(R=0.1) "Internal resistance
+inside battery"; Modelica.Electrical.Analog.Basic.Resistor loadResistance(R=10) "Load
+resistor";Modelica.Electrical.Analog.Sensors.CurrentSensor currentSensor "Measure battery
+current";Modelica.Electrical.Analog.Basic.Ground ground;
+ // Parameters
+ parameter Real Q = 2.5 "Battery capacity in Ah";
+ parameter Real initialSoC = 1.0 "Initial SoC (full battery)";
+ parameter Real processNoise = 1e-6 "Process noise";
+ parameter Real measurementNoise = 1e-4 "Measurement noise";
+ // State Variables
+ Real soc_est(start=initialSoC) "Estimated State of Charge";
+ Real soc_measured(start=initialSoC) "Measured SoC with noise";
+ Real P(start=1e-4) "Error covariance";
+ Real K "Kalman gain";
+ // Electrical Connections
+ connect(battery.p, internalResistance.p);
+ connect(internalResistance.n, currentSensor.p);
+ connect(currentSensor.n, loadResistance.p);
+ connect(loadResistance.n, ground.p);
+ connect(battery.n, ground.p);
+ // Prediction Step
+ der(soc_est) = -(currentSensor.i) / (Q * 3600);
+10
+ der(P) = processNoise;
+ // Simulate measurement with fake noise (sinusoidal noise)
+ soc_measured = soc_est + 0.01 * sin(10*time);
+// Correction Step when sample(0, 0.5) then
+ K = P / (P + measurementNoise);
+reinit(soc_est, soc_est + K * (soc_measured - soc_est));
+// Corrected estimate using noisy measurement
+ reinit(P, (1 - K) * P);end when;
+end BatteryDischargeWithKalman;
