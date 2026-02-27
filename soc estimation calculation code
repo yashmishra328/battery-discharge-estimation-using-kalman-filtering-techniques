@@ -1,0 +1,22 @@
+BatteryDischargeWithSoC
+// Electrical components
+Modelica.Electrical.Analog.Sources.ConstantVoltage
+battery(V=12) "Battery voltage source";
+Modelica.Electrical.Analog.Basic.Resistor internalResistance(R=0.1) "Internal resistance
+inside battery";
+Modelica.Electrical.Analog.Basic.Resistor loadResistance(R=10) "External load resistor";
+Modelica.Electrical.Analog.Sensors.CurrentSensor currentSensor "To measure current";
+Modelica.Electrical.Analog.Basic.Ground ground "Ground connection";
+// Parameters
+parameter Real Q = 2.5 "Battery capacity in Ah";
+// Total battery capacity parameter Real initialSoC = 1.0 "Initial SoC (full battery = 1.0)";
+// Variables Real soc(start=initialSoC) "State of Charge (0 to 1)"; equation
+// Electrical Connections connect(battery.p, internalResistance.p);
+connect(internalResistance.n, currentSensor.p);
+connect(currentSensor.n, loadResistance.p);
+connect(loadResistance.n, ground.p);
+connect(battery.n, ground.p);
+// SoC Calculation
+9
+der(soc) = -(currentSensor.i) / (Q * 3600);
+end BatteryDischargeWithSoC;
